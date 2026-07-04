@@ -1,0 +1,272 @@
+---
+title: "BYUI Coding Challenge for Adjunct Faculty Teaching DS 350"
+date: 2026-07-04
+author: 
+  - name: "Alexia Wells"
+format: pdf
+editor: visual
+---
+
+## Exploratory Data Analysis 
+```{r, output=FALSE}
+# Check directory
+getwd()
+
+# Importing libraries
+library(tidyverse)
+library(DataExplorer)
+library(kableExtra)
+```
+
+You can use read_csv in Tidyverse, but technically vroom is a faster option.
+```{r, output=FALSE}
+# Read in the data
+baby <- read_csv("names_year_csv.csv")
+
+# Faster way of reading in the data using vroom not tidyverse
+baby <- vroom::vroom("names_year_csv.csv")
+
+baby <- baby |>
+  rename(Year = year, Name = name)
+```
+These are a few great ways to take a peek at the data. 
+```{r, eval=FALSE}
+# Different options for quickly looking at the data
+glimpse(baby)
+head(baby)
+
+# Option for looking at the entire dataset in a separate tab 
+View(baby)
+```
+
+Using DataExplorer library we can see there are no missing observations, so we don't need to worry about that! There are also 33400 distinct baby names in this dataset. 
+```{r, fig.width=9}
+# Confirming there is no missing data
+plot_intro(baby)
+
+# How many distinct names?
+length(unique(baby$Name))
+```
+
+## Challenge questions
+### How does your name at your birth year compare to its use historically?
+The answer for this question was pretty surprising for me. I wasn't expecting my birth year, 2002, to be the peak of of the name historically. The max was 2,679 babies whereas in 1947 only 5 babies were named Alexia! 
+
+The bar chart is a great way to visualize the data as you can clearly see the trend. It is interesting how there is a decrease after 2002, but a slight increase in 2013, then back down in the following years.
+
+Funny enough, the only time I ever met someone else named Alexia was during my undergrad at BYU and we both happened to be statistics TAs :) 
+
+```{r}
+# Create a df for my name overtime
+Alexia_Overtime <- baby |> 
+  arrange(desc(Total)) |> 
+  group_by(Name) |> 
+  filter(Name =="Alexia") |> 
+  select(Name, Year, Total)
+```
+
+
+```{r}
+#I want to take a look at the top 5 years
+head(Alexia_Overtime, n=5) |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+
+# Look at the bottom 5 years
+tail(Alexia_Overtime, n=5)|> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+
+# What my birth year looks like
+Alexia_Overtime |> 
+  filter(Year == 2002) |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+```
+
+```{r}
+# How my name compares to it's use historically 
+ggplot(data = Alexia_Overtime, mapping = aes(x = Year, y=Total)) + 
+  geom_col(fill="pink") +
+  labs(x = "Year", y="Total", title = "Alexia Overtime") + 
+  theme_light() 
+```
+ 
+### If you talked to someone named Brittany on the phone, what is your guess of their age? What ages would you not guess?
+
+I would assume that Brittany was born in the late 80s-mid 90's. This would make her anywhere from 30-39 years old. I would not guess that she was in her 50's meaning she was born anytime from 1969-1975. Once we start looking past 1975, the popularity of the name increases with the peak in 1989 at 37,949 babies. This name is way more popular than mine has ever been! I am surprised we don't see an increase in the early 2000's. I would have guessed that Brittany Spears rising popularity would also make the name more trendy. 
+
+```{r}
+Brittany_Overtime <- baby |> 
+  arrange(desc(Total)) |> 
+  group_by(Name) |> 
+  filter(Name =="Brittany") |> 
+  select(Name, Year, Total)
+
+head(Brittany_Overtime) |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+```
+
+```{r}
+ggplot(data = Brittany_Overtime, mapping = aes(x = Year, y=Total)) + 
+  geom_col(fill="purple") +
+  labs(x = "Year", y="Total", title = "Brittany Overtime") + 
+  theme_light()
+```
+
+### Mary, Martha, Peter, and Paul are all Christian names. From 1920 - 2000, compare the name usage of each of the four names.
+
+Below are several different visualizations to understand how these names compare to each other from the years 1920-2000s. As many would assume, Mary has been the favored name overall in comparison to Martha, Peter, and Paul. Overall, Mary is 7.5x more popular than Martha. Paul is preferred over Peter and  the count of babies with the name Peter never has never surpassed Paul! Surprisingly, there are a couple years where Paul is actually higher than Mary but that doesn't start until about the mid 1970's. 
+```{r}
+# Make the table pretty using tibble? 
+Other_Overtime <- baby |> 
+  arrange(desc(Total)) |> 
+  group_by(Name) |> 
+  filter(Name =="Mary" | Name =="Martha" | Name =="Peter" | Name =="Paul", 
+         Year > 1920, Year < 2000) |> 
+  select(Name, Year, Total)
+
+# Here is a visualization of all four names 
+ggplot(data = Other_Overtime, mapping = aes(x=Year, y=Total, color = Name)) +
+  geom_line() +
+  labs(x = "Year", y= "Total", color = "Name", title = "Christian Names Over the Years") + 
+  theme_bw()
+```
+
+```{r, eval=FALSE}
+# Paul is actually higher than Mary but that doesn't start until about the mid 1970's.
+# Year 1967-1989
+baby |> 
+  arrange(desc(Total)) |> 
+  group_by(Name) |> 
+  filter(Name =="Mary"| Name =="Paul", 
+         Year > 1920, Year < 2000) |> 
+  arrange(desc(Year)) |> 
+  select(Name, Year, Total)
+```
+
+
+```{r}
+ggplot(data = Other_Overtime, mapping = aes(x=Name, y=Total, color=Name)) +
+  geom_boxplot() +
+  labs(x = "Name", y= "Total Count", color = "Name", title = "Popularity of Christian Names") + 
+  theme(legend.position = "none")
+```
+
+```{r}
+# All time count table
+baby |>
+  filter(
+    Name %in% c("Mary", "Martha", "Peter", "Paul"), 
+    Year > 1920,
+    Year < 2000
+  ) |>
+  group_by(Name) |> 
+  summarise(across(-c(Year), sum)) |> 
+  select(Name, Total) |> 
+  arrange(desc(Total))  |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+
+# You could also write the filter line like this for the name 
+# name =="Mary" | name =="Martha" | name =="Peter" | name =="Paul",
+
+# Overall, Mary is 7.5x more popular than Martha.
+3131051/415338
+```
+
+```{r, eval=FALSE}
+# Christian Name totals by state
+baby |>
+  select(-Total) |> 
+  filter(
+    Name %in% c("Mary", "Martha", "Peter", "Paul"), 
+    Year > 1920,
+    Year < 2000
+  ) |>
+  group_by(Name) |> 
+  summarise(across(-c(Year), sum)) |> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+```
+
+The tables below show the Christian name totals per state. This is a fun option to see which names have been historically the most popular for the state.
+```{r, echo = FALSE}
+Christian_Table_States <- baby |>
+  select(-Total) |> 
+  filter(
+    Name %in% c("Mary", "Martha", "Peter", "Paul"), 
+    Year > 1920,
+    Year < 2000
+  ) |>
+  group_by(Name) |> 
+  summarise(across(-c(Year), sum))
+
+
+Christian_Table_States[, 1:11]|> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+
+Christian_Table_States[, 12:22]|> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+
+Christian_Table_States[, 23:33]|> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+
+Christian_Table_States[, 34:44]|> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+
+Christian_Table_States[, 45:50]|> 
+  kbl(longtable = TRUE) |> 
+  kable_styling(latex_options = c("repeat_header", "hold_position"))
+```
+
+
+### Think of a unique name from a famous movie. Plot that name's use over time and see how increases/decreases line up with the movie release.
+
+For context, the first Hunger Games movie was released in 2012. By 2014 "The Hunger Games: Mockingjay – Part 1" was released with the series conclusion in 2015. We don't see the name appearing in the charts until 2014 which also happened to be the peak of the name, just 13 babies! 
+
+For fun I took a quick look at the name Han for the character Han Solo from Star Wars. The first star wars movie came out in 1977.  Looks like this name wasn't used until 1979. The name reaches it's peak in 2018 with 17 babies. I would assume there is a correlation with "Solo: A Star Wars Story" being released that same year. Similar to Katniss, Han is still a pretty uncommon name. 
+```{r}
+# Picked two names just for fun 
+baby |> 
+  arrange(desc(Total)) |> 
+  group_by(Name) |> 
+  filter(Name =="Katniss") |> 
+  select(Name, Year, Total) |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+```
+
+```{r}
+# As in Han Solo
+head(baby |> 
+  arrange(desc(Year)) |> 
+  group_by(Name) |> 
+  filter(Name =="Han") |> 
+  select(Name, Year, Total) |> 
+  arrange(desc(Total))) |> 
+  kbl(format = "latex") |>
+  kable_classic_2(latex_options = "hold_position")
+```
+
+
+
+ Make a private copy of this repo using the template button.
+ Invite the GitHub user hathawayj to your repo.
+ Use the Tidyverse to complete the challenge.
+ Save your quarto file and other files created at time of rendering to your repository.
+ Submit a link to your private repository.
+
+
+
+
+
+
+
+
+
