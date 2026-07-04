@@ -1,8 +1,10 @@
 # coding_challenge
 
-A short coding challenge for interview candidates of DS 150, DS 250, and DS 350.
+## Message from Alexia
+Please note that the pdf shows an error on Github, but has no issues being downloaded and looks normal.
 
 ## Challenge Description
+A short coding challenge for interview candidates of DS 150, DS 250, and DS 350.
 
 Our data science program uses R, Python, and SQL heavily. DS 250 is taught entirely in Python with some SQL. DS 350 is taught entirely in R. Both courses require the faculty to have some proficiency with GitHub. DS 150 is primarily geared toward non-majors and is taught using Tableau.
 
